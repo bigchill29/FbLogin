@@ -2,6 +2,7 @@ package com.example.mukundthakur.fblogin;
 
 import android.content.Intent;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.support.v7.app.ActionBarActivity;
@@ -16,11 +17,18 @@ import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.Profile;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 
+import org.json.JSONObject;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -35,6 +43,7 @@ public class MainActivity extends ActionBarActivity {
         getFbKeyHash("com.example.mukundthakur.fblogin");
         setContentView(R.layout.activity_main);
         fbLoginButton = (LoginButton)findViewById(R.id.fb_login_button);
+        fbLoginButton.setReadPermissions(Arrays.asList("email", "public_profile"));
         fbLoginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
@@ -45,6 +54,29 @@ public class MainActivity extends ActionBarActivity {
                 System.out.println("User ID  : " + loginResult.getAccessToken().getUserId());
                 System.out.println("Authentication Token : " + loginResult.getAccessToken().getToken());
                 Toast.makeText(MainActivity.this, "Login Successful!", Toast.LENGTH_LONG).show();
+                //Profile profile =  Profile.getCurrentProfile();
+                //System.out.println(profile.getFirstName());
+                final User user =new User();
+                GraphRequest.newMeRequest(
+                        loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
+                            @Override
+                            public void onCompleted(JSONObject me, GraphResponse response) {
+                                if (response.getError() != null) {
+                                    // handle error
+                                } else {
+                                    //String email = me.optString("email");
+                                    //String id = me.optString("id");
+                                    // send email and id to your web server
+                                    //String name = me.optString("name");
+                                    user.setEmailId(me.optString("email"));
+                                    user.setGender(me.optString("gender"));
+                                    user.setName(me.optString("name"));
+                                    user.setId(me.optString("id"));
+                                    //System.out.println("email " + email + "  name " + name + " age " + me.optString("age")
+                                    //        + " gender " + me.optString("gender"));
+                                }
+                            }
+                        }).executeAsync();
             }
 
             @Override
@@ -59,6 +91,7 @@ public class MainActivity extends ActionBarActivity {
                 Toast.makeText(MainActivity.this, "Login unsuccessful!", Toast.LENGTH_LONG).show();
                 System.out.println("Facebook Login failed!!");
             }
+
         });
     }
     public void getFbKeyHash(String packageName) {
@@ -106,4 +139,5 @@ public class MainActivity extends ActionBarActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
 }
