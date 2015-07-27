@@ -1,8 +1,8 @@
 package com.example.mukundthakur.fblogin;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
-import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.support.v7.app.ActionBarActivity;
@@ -19,7 +19,6 @@ import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
-import com.facebook.Profile;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 
@@ -27,11 +26,10 @@ import org.json.JSONObject;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 
-public class MainActivity extends ActionBarActivity {
+public class FbLoginActivity extends ActionBarActivity {
 
     private CallbackManager callbackManager;
     private LoginButton fbLoginButton;
@@ -41,9 +39,10 @@ public class MainActivity extends ActionBarActivity {
         FacebookSdk.sdkInitialize(this.getApplicationContext());
         callbackManager = CallbackManager.Factory.create();
         getFbKeyHash("com.example.mukundthakur.fblogin");
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_fblogin);
         fbLoginButton = (LoginButton)findViewById(R.id.fb_login_button);
         fbLoginButton.setReadPermissions(Arrays.asList("email", "public_profile"));
+        final Context context = this;
         fbLoginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
@@ -53,7 +52,7 @@ public class MainActivity extends ActionBarActivity {
                 System.out.println("--------------------------");
                 System.out.println("User ID  : " + loginResult.getAccessToken().getUserId());
                 System.out.println("Authentication Token : " + loginResult.getAccessToken().getToken());
-                Toast.makeText(MainActivity.this, "Login Successful!", Toast.LENGTH_LONG).show();
+                Toast.makeText(FbLoginActivity.this, "Login Successful!", Toast.LENGTH_LONG).show();
                 //Profile profile =  Profile.getCurrentProfile();
                 //System.out.println(profile.getFirstName());
                 final User user =new User();
@@ -77,18 +76,20 @@ public class MainActivity extends ActionBarActivity {
                                 }
                             }
                         }).executeAsync();
+                Intent intent = new Intent(FbLoginActivity.this, MapActivity.class);
+                startActivity(intent);
             }
 
             @Override
             public void onCancel() {
-                Toast.makeText(MainActivity.this, "Login cancelled by user!", Toast.LENGTH_LONG).show();
+                Toast.makeText(FbLoginActivity.this, "Login cancelled by user!", Toast.LENGTH_LONG).show();
                 System.out.println("Facebook Login failed!!");
 
             }
 
             @Override
             public void onError(FacebookException e) {
-                Toast.makeText(MainActivity.this, "Login unsuccessful!", Toast.LENGTH_LONG).show();
+                Toast.makeText(FbLoginActivity.this, "Login unsuccessful!", Toast.LENGTH_LONG).show();
                 System.out.println("Facebook Login failed!!");
             }
 
