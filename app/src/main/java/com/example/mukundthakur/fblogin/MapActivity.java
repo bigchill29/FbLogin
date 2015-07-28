@@ -2,6 +2,7 @@ package com.example.mukundthakur.fblogin;
 
 import android.location.Criteria;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.support.v7.app.ActionBarActivity;
@@ -11,6 +12,7 @@ import android.widget.Button;
 
 import com.google.android.gms.maps.*;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.apache.http.HttpResponse;
@@ -30,16 +32,19 @@ import java.util.*;
 
 public class MapActivity extends ActionBarActivity {
 
-    GoogleMap googleMap;
-    String postURL = "http://192.168.2.5:8080/employee/create";
-    String getURL = "http://192.168.2.5:8080/employee/getNear/23";
-    double latitude;
-    double longitude;
+    private GoogleMap googleMap;
+    private String postURL = "http://192.168.2.5:8080/employee/create";
+    private String getURL = "http://192.168.2.5:8080/employee/getNear/23";
+    private double latitude;
+    private double longitude;
+    private Marker marker = null;
+    private Map<String, Marker> list;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+        list = new HashMap<String, Marker>();
         SupportMapFragment fm = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         googleMap = fm.getMap();
         googleMap.setMyLocationEnabled(true);
@@ -47,19 +52,33 @@ public class MapActivity extends ActionBarActivity {
         Criteria criteria = new Criteria();
         String provider = locationManager.getBestProvider(criteria, true);
         Location location = locationManager.getLastKnownLocation(provider);
+        UpdateMapPos(location);
 
-        if (location != null) {
-            latitude = location.getLatitude();
-            longitude = location.getLongitude();
-            LatLng latLng = new LatLng(latitude, longitude);
-            googleMap.setMyLocationEnabled(true);
-            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
-            googleMap.addMarker(new MarkerOptions().title("Azhar").position(latLng));
+        LocationListener locationlistener =new LocationListener() {
+            @Override
+            public void onLocationChanged(Location loc) {
 
-            AsyncTaskRunner runner = new AsyncTaskRunner();
-            runner.execute();
-        }
+                UpdateMapPos(loc);
+            }
 
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+
+            }
+        };
+
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0, 0, locationlistener);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,0, 0, locationlistener);
         Button button = (Button) findViewById(R.id.rideButton);
 
         button.setOnClickListener(new View.OnClickListener() {
@@ -77,6 +96,26 @@ public class MapActivity extends ActionBarActivity {
 
             }
         });
+    }
+
+    public void UpdateMapPos(Location location){
+
+        if (location != null) {
+            latitude = location.getLatitude();
+            longitude = location.getLongitude();
+            LatLng latLng = new LatLng(latitude, longitude);
+            googleMap.setMyLocationEnabled(true);
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17));
+            if(marker != null){
+                marker.setPosition(latLng);
+            }
+            else{
+                marker = googleMap.addMarker(new MarkerOptions().title("azhar").position(latLng));
+            }
+            AsyncTaskRunner runner = new AsyncTaskRunner();
+            runner.execute();
+        }
+
     }
 
     public void PostUserInfo() throws IOException, JSONException {
@@ -153,7 +192,13 @@ public class MapActivity extends ActionBarActivity {
 
             Set<String> keys = result.keySet();
             for (String key : keys) {
-                googleMap.addMarker(new MarkerOptions().title(key).position(result.get(key)));
+                if(list.get(key) != null){
+                    list.get(key).setPosition(result.get(key));
+                }
+                else{
+                    Marker newmarker = googleMap.addMarker(new MarkerOptions().title(key).position(result.get(key)));
+                    list.put(key, newmarker);
+                }
             }
         }
 
@@ -163,4 +208,6 @@ public class MapActivity extends ActionBarActivity {
         @Override
         protected void onProgressUpdate(Void... values) {}
     }
+
+
 }
